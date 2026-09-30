@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { durasiJam } from "@/lib/shift";
-
-const JAM_RE = /^\d{2}:\d{2}$/;
+import { durasiJam, jamValid } from "@/lib/shift";
 
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
   const id = Number(params.id);
@@ -28,7 +26,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   if (jm !== undefined || js !== undefined) {
     const nm = jm ?? existing.jamMulai;
     const ns = js ?? existing.jamSelesai;
-    if (!JAM_RE.test(nm) || !JAM_RE.test(ns)) {
+    if (!jamValid(nm) || !jamValid(ns)) {
       return NextResponse.json({ error: "jam harus format HH:MM" }, { status: 400 });
     }
     if (durasiJam(nm, ns) <= 0 || durasiJam(nm, js ?? existing.jamSelesai) > 24) {

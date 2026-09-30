@@ -35,6 +35,15 @@ function jamKeMenit(hhmm: string): number {
   return h * 60 + (m || 0);
 }
 
+/** Validasi format HH:MM dengan jam 00-23 dan menit 00-59. */
+export function jamValid(hhmm: string): boolean {
+  const m = /^(\d{2}):(\d{2})$/.exec(hhmm);
+  if (!m) return false;
+  const h = Number(m[1]);
+  const mn = Number(m[2]);
+  return h >= 0 && h <= 23 && mn >= 0 && mn <= 59;
+}
+
 /** Durasi shift dalam jam; jam_selesai <= jam_mulai berarti lewat tengah malam. */
 export function durasiJam(jamMulai: string, jamSelesai: string): number {
   const a = jamKeMenit(jamMulai);
@@ -174,6 +183,13 @@ export async function validasiMinggu(minggu: string) {
   const { mingguMulai, mingguSelesai, rows } = await ambilJadwalMinggu(minggu);
   const pelanggaran = validasiRows(rows, aturan, mingguMulai, templates);
   return { mingguMulai, mingguSelesai, aturan, totalJadwal: rows.length, pelanggaran };
+}
+
+/** Selisih pelanggaran: hanya yang BARU muncul di `sesudah` (identitas = tipe+karyawan+tanggal+template). */
+export function selisihPelanggaran(sebelum: Pelanggaran[], sesudah: Pelanggaran[]): Pelanggaran[] {
+  const kunci = (p: Pelanggaran) => [p.tipe, p.karyawanId ?? "", p.tanggal ?? "", p.templateId ?? ""].join("|");
+  const ada = new Set(sebelum.map(kunci));
+  return sesudah.filter((p) => !ada.has(kunci(p)));
 }
 
 /** Validasi hipotetis untuk POST manual / persetujuan tukar (tanpa tulis DB). */

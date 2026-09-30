@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { ambilJadwalMinggu, validasiHipotesis } from "@/lib/shift";
+import { ambilJadwalMinggu, selisihPelanggaran, validasiHipotesis } from "@/lib/shift";
 
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
   const id = Number(params.id);
@@ -55,7 +55,9 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
         }
       : r
   );
-  const pelanggaran = await validasiHipotesis(hipotesis, mingguMulai);
+  const sebelum = await validasiHipotesis(rows, mingguMulai);
+  const sesudah = await validasiHipotesis(hipotesis, mingguMulai);
+  const pelanggaran = selisihPelanggaran(sebelum, sesudah);
   if (pelanggaran.length > 0) {
     return NextResponse.json(
       { error: "Persetujuan tukar shift melanggar aturan", pelanggaran },

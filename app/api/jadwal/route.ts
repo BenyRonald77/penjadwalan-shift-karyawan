@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import {
   ambilJadwalMinggu,
+  selisihPelanggaran,
   validasiHipotesis,
   type JadwalRow,
 } from "@/lib/shift";
@@ -62,7 +63,9 @@ export async function POST(req: NextRequest) {
     jamSelesai: template.jamSelesai,
     kebutuhanMinimum: template.kebutuhanMinimum,
   };
-  const pelanggaran = await validasiHipotesis([...rows, baru], mingguMulai);
+  const sebelum = await validasiHipotesis(rows, mingguMulai);
+  const sesudah = await validasiHipotesis([...rows, baru], mingguMulai);
+  const pelanggaran = selisihPelanggaran(sebelum, sesudah);
   if (pelanggaran.length > 0 && !force) {
     return NextResponse.json(
       { error: "Penjadwalan melanggar aturan", pelanggaran },

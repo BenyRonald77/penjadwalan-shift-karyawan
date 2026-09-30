@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { durasiJam } from "@/lib/shift";
-
-const JAM_RE = /^\d{2}:\d{2}$/;
+import { durasiJam, jamValid } from "@/lib/shift";
 
 export async function GET() {
   const rows = await prisma.shiftTemplate.findMany({ orderBy: { id: "asc" } });
@@ -17,7 +15,7 @@ export async function POST(req: NextRequest) {
   const { jam_mulai, jamMulai, jam_selesai, jamSelesai } = body ?? {};
   const jm = jam_mulai ?? jamMulai;
   const js = jam_selesai ?? jamSelesai;
-  if (typeof jm !== "string" || !JAM_RE.test(jm) || typeof js !== "string" || !JAM_RE.test(js)) {
+  if (!jamValid(jm) || !jamValid(js)) {
     return NextResponse.json({ error: "jam_mulai dan jam_selesai harus format HH:MM" }, { status: 400 });
   }
   if (durasiJam(jm, js) <= 0 || durasiJam(jm, js) > 24) {
