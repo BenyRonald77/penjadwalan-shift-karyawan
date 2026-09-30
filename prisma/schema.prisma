@@ -1,0 +1,67 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Karyawan {
+  id             Int          @id @default(autoincrement())
+  nama           String
+  jabatan        String?
+  maksJamMinggu  Int          @default(40) @map("maks_jam_minggu")
+  jadwal         JadwalShift[]
+  tukarDiminta   TukarShift[] @relation("pemohon")
+  tukarMengganti TukarShift[] @relation("pengganti")
+
+  @@map("karyawan")
+}
+
+model ShiftTemplate {
+  id               Int          @id @default(autoincrement())
+  nama             String
+  jamMulai         String       @map("jam_mulai")
+  jamSelesai       String       @map("jam_selesai")
+  kebutuhanMinimum Int          @default(2) @map("kebutuhan_minimum")
+  jadwal           JadwalShift[]
+
+  @@map("shift_template")
+}
+
+model JadwalShift {
+  id         Int           @id @default(autoincrement())
+  karyawanId Int           @map("karyawan_id")
+  karyawan   Karyawan      @relation(fields: [karyawanId], references: [id], onDelete: Cascade)
+  tanggal    String
+  templateId Int           @map("shift_template_id")
+  template   ShiftTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  status     String        @default("terjadwal")
+  tukarAsal  TukarShift[]  @relation("jadwal_asal")
+
+  @@map("jadwal_shift")
+}
+
+model Aturan {
+  id    Int    @id @default(autoincrement())
+  key   String @unique
+  value String
+
+  @@map("aturan")
+}
+
+model TukarShift {
+  id                  Int         @id @default(autoincrement())
+  jadwalAsalId        Int         @map("jadwal_asal_id")
+  jadwalAsal          JadwalShift @relation("jadwal_asal", fields: [jadwalAsalId], references: [id], onDelete: Cascade)
+  karyawanPemohonId   Int         @map("karyawan_pemohon_id")
+  karyawanPemohon     Karyawan    @relation("pemohon", fields: [karyawanPemohonId], references: [id], onDelete: Cascade)
+  karyawanPenggantiId Int         @map("karyawan_pengganti_id")
+  karyawanPengganti   Karyawan    @relation("pengganti", fields: [karyawanPenggantiId], references: [id], onDelete: Cascade)
+  status              String      @default("pending")
+  alasan              String?
+  dibuatPada          String      @default("") @map("dibuat_pada")
+
+  @@map("tukar_shift")
+}
